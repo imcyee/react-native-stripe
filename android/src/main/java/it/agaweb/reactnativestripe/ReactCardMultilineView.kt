@@ -67,12 +67,11 @@ class ReactCardMultilineView(context: Context) : FrameLayout(context) {
 
           event.putMap("cardParams", params)
         }
-
         (context as ReactContext).getJSModule(RCTEventEmitter::class.java).receiveEvent(id, "onCardValidCallback", event)
       }
-
     }
-   cardMultilineWidget.setCardValidCallback(cardValidCallback)
+    
+    cardMultilineWidget.setCardValidCallback(cardValidCallback)
 
     val cardInputListener = object : CardInputListener {
       override fun onCardComplete() {
