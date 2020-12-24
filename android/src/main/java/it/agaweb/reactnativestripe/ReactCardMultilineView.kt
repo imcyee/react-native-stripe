@@ -11,6 +11,7 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.events.RCTEventEmitter
 import com.stripe.android.view.CardInputListener
 import com.stripe.android.view.CardMultilineWidget
+import com.stripe.android.view.CardValidCallback
 
 
 class ReactCardMultilineView(context: Context) : FrameLayout(context) {
