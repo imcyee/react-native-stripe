@@ -2,26 +2,26 @@ package it.agaweb.reactnativestripe
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import com.facebook.react.bridge.*
-import com.stripe.android.ApiResultCallback
+import com.stripe.android.*
+import com.stripe.android.model.*
+import com.stripe.android.model.PaymentMethod.*
+import com.stripe.android.view.AddPaymentMethodActivityStarter
 
-import com.stripe.android.PaymentConfiguration
-import com.stripe.android.PaymentIntentResult
-import com.stripe.android.SetupIntentResult
-import com.stripe.android.Stripe
-import com.stripe.android.model.CardParams
-import com.stripe.android.model.ConfirmPaymentIntentParams
-import com.stripe.android.model.ConfirmSetupIntentParams
-import com.stripe.android.model.PaymentMethodCreateParams;
-import com.stripe.android.model.StripeIntent
 
 class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
   private lateinit var paymentPromise: Promise
   private lateinit var setupPromise: Promise
   private lateinit var stripe: Stripe
+  private lateinit var publishableKey: String
+
+  private val E_ACTIVITY_DOES_NOT_EXIST = "E_ACTIVITY_DOES_NOT_EXIST"
+
   private val activityListener = object : BaseActivityEventListener() {
     override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+
       // Handle the result of stripe.confirmPayment
       stripe.onPaymentResult(requestCode, data, object : ApiResultCallback<PaymentIntentResult> {
         override fun onSuccess(result: PaymentIntentResult) {
@@ -76,7 +76,78 @@ class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
       reactApplicationContext,
       publishableKey
     )
+    this.publishableKey = publishableKey
+    this.stripe = Stripe(
+      reactApplicationContext,
+      PaymentConfiguration.getInstance(reactApplicationContext).publishableKey
+    )
+    Log.d("sometime","The key is $publishableKey");
   }
+
+  @ReactMethod
+  fun requestPaymentWithFpx(promise: Promise) {
+
+    attachFPXPaymentResultActivityListener(promise);
+
+    if (currentActivity == null) {
+      promise.reject(E_ACTIVITY_DOES_NOT_EXIST, "Activity doesn't exist");
+      return;
+    }
+
+//    // // already init
+//    PaymentConfiguration.init(reactApplicationContext, publishableKey)
+
+
+    // Store the promise to resolve/reject when picker returns data
+
+    // Store the promise to resolve/reject when picker returns data
+    paymentPromise = promise
+
+    AddPaymentMethodActivityStarter(currentActivity!!)
+      .startForResult(
+        AddPaymentMethodActivityStarter
+          .Args
+          .Builder()
+          .setPaymentMethodType(Type.Fpx)
+          .build()
+      )
+  }
+
+
+  private fun attachFPXPaymentResultActivityListener(promise: Promise) {
+    val ael: ActivityEventListener = object : BaseActivityEventListener() {
+      override fun onActivityResult(a: Activity, requestCode: Int, resultCode: Int, data: Intent) {
+        val ael: ActivityEventListener = this
+        reactApplicationContext.removeActivityEventListener(ael)
+        val result: AddPaymentMethodActivityStarter.Result = AddPaymentMethodActivityStarter.Result.fromIntent(data)
+        if (result is AddPaymentMethodActivityStarter.Result.Success) {
+          val successResult: AddPaymentMethodActivityStarter.Result.Success = result
+
+          // onPaymentMethodResult(successResult.getPaymentMethod());
+          val paymentMethod: PaymentMethod = successResult.paymentMethod
+          val fpxBankCode: String = paymentMethod.fpx!!.bank!!
+          val resultMessage = """
+                Created Payment Method
+
+                Type: ${paymentMethod.type}
+                Id: ${paymentMethod.id}
+                Bank code: $fpxBankCode
+                """.trimIndent()
+          val fpxResult = Arguments.createMap()
+          fpxResult.putString("type", paymentMethod.type.toString())
+          fpxResult.putString("id", paymentMethod.id)
+          fpxResult.putString("bankCode", fpxBankCode)
+          promise.resolve(fpxResult)
+        }
+      }
+
+//      override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+//        onActivityResult(null, requestCode, resultCode, data)
+//      }
+    }
+    reactApplicationContext.addActivityEventListener(ael)
+  }
+
 
   @ReactMethod
   fun confirmPaymentWithCard(clientSecret: String, cardParams: ReadableMap, savePaymentMethod: Boolean, promise: Promise) {
@@ -97,7 +168,7 @@ class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
   @ReactMethod
   fun confirmPaymentWithPaymentMethodId(clientSecret: String, paymentMethodId: String, promise: Promise) {
     val confirmParams = ConfirmPaymentIntentParams
-      .createWithPaymentMethodId(paymentMethodId, clientSecret)
+      .createWithPaymentMethodId(paymentMethodId, clientSecret, "stripejs://use_stripe_sdk/return_url")
 
     paymentPromise = promise
     confirmPayment(confirmParams)
@@ -120,10 +191,10 @@ class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
   }
 
   private fun confirmPayment(confirmParams: ConfirmPaymentIntentParams) {
-    stripe = Stripe(
-      reactApplicationContext,
-      PaymentConfiguration.getInstance(reactApplicationContext).publishableKey
-    )
+//    stripe = Stripe(
+//      reactApplicationContext,
+//      PaymentConfiguration.getInstance(reactApplicationContext).publishableKey
+//    )
     stripe.confirmPayment(currentActivity!!, confirmParams)
   }
 
