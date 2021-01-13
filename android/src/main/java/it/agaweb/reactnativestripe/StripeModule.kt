@@ -94,12 +94,6 @@ class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
       return;
     }
 
-//    // // already init
-//    PaymentConfiguration.init(reactApplicationContext, publishableKey)
-
-
-    // Store the promise to resolve/reject when picker returns data
-
     // Store the promise to resolve/reject when picker returns data
     paymentPromise = promise
 
@@ -113,7 +107,9 @@ class StripeModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
       )
   }
 
-
+  /**
+  * Listen to the fpx selection
+  */
   private fun attachFPXPaymentResultActivityListener(promise: Promise) {
     val ael: ActivityEventListener = object : BaseActivityEventListener() {
       override fun onActivityResult(a: Activity, requestCode: Int, resultCode: Int, data: Intent) {

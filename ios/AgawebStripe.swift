@@ -58,6 +58,19 @@ class AgawebStripe: NSObject, STPAuthenticationContext {
 
         confirmSetupIntent(setupPaymentIntentParams: setupPaymentIntentParams, resolve: resolve, reject: reject)
     }
+    
+    // fpx payment
+    // func payWithFPX() {
+    //   let vc = STPBankSelectionViewController.init(bankMethod: .FPX)
+    //   vc.delegate = self
+    //   self.navigationController?.pushViewController(vc, animated: true)
+    // }
+
+    // func bankSelectionViewController(_ bankViewController: STPBankSelectionViewController, didCreatePaymentMethodParams paymentMethodParams: STPPaymentMethodParams) {
+    //   self.confirmPayment(paymentMethodParams: paymentMethodParams)
+    // }
+
+
 
     func confirmPayment(paymentIntentParams: STPPaymentIntentParams, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         // Submit the payment
