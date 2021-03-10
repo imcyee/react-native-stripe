@@ -18,6 +18,10 @@ const confirmPaymentWithCard = (
   );
 };
 
+const requestPaymentWithFpx = ()=>{
+  return AgawebStripe.requestPaymentWithFpx();
+}
+
 const confirmPaymentWithPaymentMethodId = (clientSecret, paymentMethodId) => {
   return AgawebStripe.confirmPaymentWithPaymentMethodId(
     clientSecret,
@@ -39,6 +43,7 @@ export { StripeCardInputWidget };
 
 export default {
   initModule,
+  requestPaymentWithFpx,
   confirmPaymentWithCard,
   confirmPaymentWithPaymentMethodId,
   confirmCardSetup,
